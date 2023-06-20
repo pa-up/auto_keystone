@@ -1,13 +1,7 @@
 import streamlit as st
 from views import keystone
 
-
-terminal_command = """
-アプリ起動コマンド（ポート番号をOCRアプリ専用で用意）
-streamlit run app.py --server.port 9310 --server.address 0.0.0.0
-"""
 st.title('画像加工アプリ')
-
 
 def change_page(page):
     st.session_state["page"] = page
