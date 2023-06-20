@@ -2,13 +2,12 @@ import streamlit as st
 from views import keystone
 
 st.title('画像加工アプリ')
+st.write('\n')
 
 def change_page(page):
     st.session_state["page"] = page
 
 def keystone_page():
-    # 別ページへの遷移
-    st.write('\n')
     # 画像処理の実行
     page_subtitle = "<h3>画像を台形補正</h3><p></p>"
     keystone.main(page_subtitle)
