@@ -147,13 +147,21 @@ def get_square_contours(contours:np.ndarray):
     return edge_4_easy , square_contours_count
 
 
-def auto_keystone(rgb_img_np, mask_df, mask_number):
-    """ 台形補正を実行する関数 """
+def auto_keystone(rgb_img_np: np.ndarray , mask_df: int = 20):
+    """ 
+    台形補正を実行する関数 
+        入力画像を複数のmin閾値ごとに2値化し、各々に台形補正画像を出力するs
+     Parameters:
+        rgb_img_np (np.ndarray) : RGB画像
+        mask_df (int) : 複数設定する「2値化のmin閾値」どうしの差
+            「mask_df」を小さくする → 精度 & 処理負荷 の増大
+    """
     row = rgb_img_np.shape[0]  # 入力画像の行数（縦サイズ）
     col = rgb_img_np.shape[1]   # 入力画像の列数（横サイズ）
     img_gray = cv2.cvtColor(rgb_img_np, cv2.COLOR_BGR2GRAY)  #グレースケール化
 
     # マスク画像のmin閾値ループに必要な変数と準備
+    mask_number = int(250 / mask_df) + 1   # マスク画像の数(min閾値の数)
     img_mask = np.empty((mask_number),  dtype='object')
     available_mask_count = 0   #「点の数が4つの近似輪郭」を含む マスク画像の数
     edge_4_mask = []    # 各マスク画像に対して検出された、面積が最大な「点の数が4つの近似輪郭」の「座標群」のリスト
@@ -203,8 +211,16 @@ def main(page_subtitle="<h1>画像を台形補正</h1><p></p>"):
     # タイトル
     st.write(page_subtitle, unsafe_allow_html=True)
 
-    st.write("<h5>画像ファイルをアップロードしてください</h5>", unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("テキストの周りに模様や濃い色の背景があると正しく認識されない可能性があります。", type=["jpg", "jpeg", "png"])
+    st.write("<h5>画像をアップロード or ドロップしてください</h5>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("画像は横サイズ、縦サイズともに1500px未満でアップロードしてください。（NG例 : 1800 × 300）", type=["jpg", "jpeg", "png"])
+    uploaded_explanation = """
+    <span style='font-size:15px;'><ul>
+    <li>本サイトでは入力画像が台形でなくても、四角形であれば補正できます。</li>
+    <li>「補正したい四角形領域の内部」と「背景」の明度差が大きいほど綺麗に補正されます。</li>
+    <li>有効な画像例：<br>「領域内部」：明るい色（or 暗い色） ,「背景」：暗い色（or 明るい色）など</li>
+    </ul></span>
+    """
+    st.markdown(uploaded_explanation , unsafe_allow_html=True)
 
     if uploaded_file is not None:
         # PILで画像を開く
@@ -215,11 +231,7 @@ def main(page_subtitle="<h1>画像を台形補正</h1><p></p>"):
         rgb_img_np = rgb_img_np[..., :3]
 
         # 台形補正を実行
-        mask_df = 20  # min閾値どうしの差
-        mask_number = int(250 / mask_df) + 1  # マスク画像の数(min閾値の数)
-        cv_calc_img, success_count = auto_keystone(
-            rgb_img_np, mask_df, mask_number
-        )
+        cv_calc_img, success_count = auto_keystone(rgb_img_np)
 
         if success_count == 0:
             st.markdown(f"<h5>台形補正失敗</h5>" , unsafe_allow_html=True)
